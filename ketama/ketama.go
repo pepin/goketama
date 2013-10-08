@@ -79,6 +79,10 @@ func readServerDefinitions(filename string) (ss []ServerInfo, memory uint64, err
     return ss, memory, nil
 }
 
+func NewServer(addr net.Addr, mem uint64) ServerInfo {
+    return ServerInfo{addr, mem}
+}
+
 func md5Digest(in []byte) []byte {
     h := md5.New()
     h.Write(in)
@@ -119,6 +123,19 @@ func NewFromFile(filename string) (*Continuum, error) {
     if err != nil {
         return nil, err
     }
+    c, err := NewFromServerInfoSliceAndMemory(serverList, memory)
+    c.modtime = fileInfo.ModTime()
+    return c, err
+}
+
+func NewFromServerInfoSlice(serverList []ServerInfo) (*Continuum, error ) {
+    var memory = uint64(0)
+    for _, server := range serverList {
+        memory += server.memory
+    }
+    return NewFromServerInfoSliceAndMemory(serverList, memory)
+}
+func NewFromServerInfoSliceAndMemory(serverList []ServerInfo, memory uint64) (*Continuum, error ) {
     numServers := len(serverList)
     if numServers < 1 {
         return nil, ErrNoServers
@@ -151,7 +168,7 @@ func NewFromFile(filename string) (*Continuum, error) {
 
     continuum.array.Sort()
     continuum.numpoints = cont
-    continuum.modtime = fileInfo.ModTime()
+    continuum.modtime = time.Now()
 
     return continuum, nil
 }
